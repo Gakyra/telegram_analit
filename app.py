@@ -13,4 +13,12 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app, db)
 
+    #  ИМПОРТИРУЕМ МОДЕЛИ ПОСЛЕ ИНИЦИАЛИЗАЦИИ
+    with app.app_context():
+        from flask_analit.models import (
+            User, Asset, Post, Comment,
+            Forecast, Investment, PortfolioHistory
+        )
+
     return app
+
