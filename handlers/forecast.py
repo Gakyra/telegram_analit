@@ -1,15 +1,18 @@
-from aiogram import Router, types
-from flask_analit.models import Forecast
-from utils.database import app
+# handlers/forecast.py
+from aiogram import Router
+from aiogram.types import Message
+from app.services.forecast_service import get_latest_forecasts
 
 router = Router()
 
-@router.message(lambda msg: msg.text == "/forecast")
-async def forecast_handler(message: types.Message):
-    telegram_id = message.from_user.id
-    with app.app_context():
-        user = Forecast.query.filter_by(user_id=telegram_id).order_by(Forecast.created_at.desc()).first()
-        if not user:
-            await message.answer("🔮 Нет доступных прогнозов.")
-        else:
-            await message.answer(f"📈 Последний прогноз по {user.symbol}:\n{user.predicted}")
+@router.message(lambda msg: msg.text.lower() == "прогнозы")
+async def handle_forecasts(message: Message):
+    forecasts = get_latest_forecasts()
+    if not forecasts:
+        await message.answer("Нет доступных прогнозов.")
+    else:
+        text = "\n\n".join([
+            f"🔮 {f.asset_name}\nДата: {f.created_at.strftime('%d.%m.%Y')}\nПрогноз: {f.prediction}"
+            for f in forecasts
+        ])
+        await message.answer(f"Последние прогнозы:\n{text}")

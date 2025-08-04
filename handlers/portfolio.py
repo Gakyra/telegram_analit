@@ -1,10 +1,15 @@
-from aiogram import Router, types
-from utils.database import get_user_portfolio
+from aiogram import Router
+from aiogram.types import Message
+from app.services.portfolio_service import get_user_portfolio
 
 router = Router()
 
-@router.message(lambda msg: msg.text == "/portfolio")
-async def portfolio_handler(message: types.Message):
-    telegram_id = message.from_user.id
-    result = get_user_portfolio(telegram_id)
-    await message.answer(f"📊 Ваш портфель:\n{result}")
+@router.message(lambda msg: msg.text.lower() == "портфель")
+async def handle_portfolio(message: Message):
+    user_id = message.from_user.id
+    portfolio = get_user_portfolio(user_id)
+    if not portfolio:
+        await message.answer("Портфель пуст.")
+    else:
+        text = "\n".join([f"{p.asset_name}: {p.amount}" for p in portfolio])
+        await message.answer(f"Ваш портфель:\n{text}")

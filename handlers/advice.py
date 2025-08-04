@@ -1,16 +1,19 @@
-from aiogram import Router, types
-import random
+# handlers/advice.py
+from aiogram import Router
+from aiogram.types import Message
+from app.services.advice_service import get_psychology_advice
+from app.models import User
+from flask import current_app
 
 router = Router()
 
-TIPS = [
-    "🧘 Дыши глубоко. Паника мешает видеть рынок.",
-    "💡 Лучше держать, чем убегать в минус.",
-    "⚖️ Не инвестируй эмоционально. Думай как аналитик.",
-    "🎯 Стратегия важнее тренда. Не прыгай вслепую."
-]
-
-@router.message(lambda msg: msg.text == "/advice")
-async def advice_handler(message: types.Message):
-    tip = random.choice(TIPS)
-    await message.answer(f"🧠 Психологический совет:\n{tip}")
+@router.message(lambda msg: msg.text.lower() == "совет")
+async def handle_advice(message: Message):
+    user_id = message.from_user.id
+    with current_app.app_context():
+        user = User.query.filter_by(tg_id=user_id).first()
+        if not user:
+            await message.answer("Сначала зарегистрируйся через /start.")
+        else:
+            advice = get_psychology_advice(user)
+            await message.answer(f"🧠 Совет: {advice}")
