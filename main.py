@@ -1,41 +1,27 @@
 import asyncio
-from aiogram import Bot, Dispatcher
-from handlers import start, portfolio, advice, forecast, profile
-
-from dotenv import load_dotenv
-from pathlib import Path
 import os
-from threading import Thread
+from aiogram import Bot, Dispatcher
+from aiogram.types import BotCommand
+from aiogram.fsm.storage.memory import MemoryStorage
 
-env_path = Path(__file__).resolve().parent / ".env"
-load_dotenv(dotenv_path=env_path)
+from handlers import start, portfolio
 
-from app import create_app
-from flask_analit.extensions import db
-
-flask_app = create_app()
-
-with flask_app.app_context():
-    from app.models import (
-        User, Asset, Post, Comment,
-        Forecast, Investment, PortfolioHistory, log_history
-    )
-    db.create_all()
-
-def run_flask():
-    flask_app.run(debug=False, use_reloader=False)
-
-bot = Bot(token=os.getenv("TELEGRAM_TOKEN"))
-dp = Dispatcher()
-
-dp.include_router(start.router)
-dp.include_router(portfolio.router)
-dp.include_router(advice.router)
-dp.include_router(forecast.router)
-dp.include_router(profile.router)
+TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 async def main():
-    Thread(target=run_flask).start()
+    bot = Bot(token=TOKEN, parse_mode="HTML")  # ✅ parse_mode передаётся напрямую
+    dp = Dispatcher(storage=MemoryStorage())
+
+    # ✅ Подключаем роутеры
+    dp.include_router(start.router)
+    dp.include_router(portfolio.router)
+
+    # ✅ Устанавливаем команды
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Запустить бота")
+    ])
+
+    # ✅ Запускаем polling
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

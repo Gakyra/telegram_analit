@@ -4,3 +4,4 @@ Flask==2.3.3
 SQLAlchemy==1.4.49
 python-dotenv==1.0.0
 asyncpg==0.29.0
+aiohttp
