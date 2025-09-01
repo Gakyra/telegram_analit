@@ -14,12 +14,14 @@ async def send_main_menu(message: Message):
             [KeyboardButton(text="📊 Мой профиль")],
             [KeyboardButton(text="🧠 Психология")],
             [KeyboardButton(text="📈 Котировки")],
-            [KeyboardButton(text="📊 Прогноз")]  # 👈 Новая кнопка
+            [KeyboardButton(text="📊 Прогноз")],
+            [KeyboardButton(text="📰 Новости"), KeyboardButton(text="🔔 Напомнить о важных событиях")]
         ],
         resize_keyboard=True,
         input_field_placeholder="Выберите действие"
     )
     await message.answer("📍 Главное меню", reply_markup=kb)
+
 
 # ✅ Команда /start
 @router.message(CommandStart())

@@ -5,3 +5,4 @@ SQLAlchemy==1.4.49
 python-dotenv==1.0.0
 asyncpg==0.29.0
 aiohttp
+beautifulsoup4

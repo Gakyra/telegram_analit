@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 from aiogram.fsm.storage.memory import MemoryStorage
-
 from handlers.start import router as start_router
 from handlers.portfolio import router as portfolio_router
 from handlers.psychology import router as psychology_router
+from handlers.news import router as news_router
 from db import init_db
 
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +33,7 @@ async def main():
     dp.include_router(start_router)
     dp.include_router(portfolio_router)
     dp.include_router(psychology_router)
+    dp.include_router(news_router)
     logger.info("✅ Роутеры подключены")
 
     await bot.set_my_commands([
