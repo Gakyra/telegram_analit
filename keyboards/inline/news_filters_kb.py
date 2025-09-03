@@ -14,3 +14,12 @@ def importance():
         [InlineKeyboardButton(text="Важность 2", callback_data="2")],
         [InlineKeyboardButton(text="Важность 3", callback_data="3")]
     ])
+
+
+
+def period():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Сегодня", callback_data="today")],
+        [InlineKeyboardButton(text="Завтра", callback_data="tomorrow")],
+        [InlineKeyboardButton(text="Неделя", callback_data="week")]
+    ])

@@ -2,57 +2,49 @@ from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from keyboards.inline import news_filters_kb
-from services.calendar import get_events_safe
-
+from services.calendar import get_events_by_date, get_upcoming_important_events, KYIV_TZ
 from datetime import datetime
-
 router = Router()
 
 class NewsState(StatesGroup):
-    choosing_country = State()
-    choosing_importance = State()
+    choosing_period = State()
 
-# 📰 Вход в новости
 @router.message(F.text == "📰 Новости")
 async def news_entry(message: types.Message, state: FSMContext):
-    await message.answer("Выбери страну:", reply_markup=news_filters_kb.country())
-    await state.set_state(NewsState.choosing_country)
+    await message.answer("Выбери период:", reply_markup=news_filters_kb.period())
+    await state.set_state(NewsState.choosing_period)
 
-# 🌍 Выбор страны
-@router.callback_query(NewsState.choosing_country)
-async def country_chosen(callback: types.CallbackQuery, state: FSMContext):
-    await state.update_data(country=callback.data)
-    await callback.message.edit_text("Выбери важность событий:", reply_markup=news_filters_kb.importance())
-    await state.set_state(NewsState.choosing_importance)
+@router.callback_query(NewsState.choosing_period)
+async def period_chosen(callback: types.CallbackQuery, state: FSMContext):
+    mode = callback.data  # "today", "tomorrow", "week"
+    events = await get_events_by_date(mode)
 
-# 🔍 Выбор важности
-@router.callback_query(NewsState.choosing_importance)
-async def importance_chosen(callback: types.CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    country = data["country"]
-    importance = int(callback.data)
-
-    events = await get_events_safe(country_filter=[country], min_importance=importance)
-    if not events or events[0]["event"] == "События временно недоступны":
-        await callback.message.edit_text("Нет событий по выбранным фильтрам.")
+    if not events or events[0]["event"].startswith("События на выбранную дату отсутствуют"):
+        await callback.message.edit_text("Нет событий на выбранную дату.")
         return
 
-    text = f"📰 События ({country}, важность: {importance}):\n\n"
+    text = f"📰 События ({mode}):\n\n"
     for e in events[:10]:
+        dt = e.get("datetime")
+        now = datetime.now(KYIV_TZ)
+        status = "🕒 Ожидается"
+        if dt and dt < now:
+            status = "✅ Уже прошло"
+        if e["actual"] != "-":
+            status = "📊 Опубликовано"
+
         text += (
             f"• {e['time']} — {e['event']}\n"
+            f"  Статус: {status}\n"
             f"  Факт: {e['actual']} | Прогноз: {e['forecast']} | Пред: {e['previous']}\n\n"
         )
 
     await callback.message.edit_text(text.strip())
 
-# 🔔 Напоминание о ближайших событиях
 @router.message(F.text == "🔔 Напомнить о важных событиях")
 async def remind_important(message: types.Message):
-    events = await get_events_safe(country_filter=["United States"], min_importance=3)
-    now = datetime.now().strftime("%H:%M")
+    upcoming = await get_upcoming_important_events()
 
-    upcoming = [e for e in events if e["time"] >= now]
     if not upcoming:
         await message.answer("Сегодня больше нет важных событий.")
         return

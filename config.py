@@ -1,0 +1,3 @@
+import os
+
+TOKEN = os.getenv("TELEGRAM_TOKEN", "8426850681:AAHEOH5l4jQwOvsXUQ3kma_6XTzX6TXFPmU")
